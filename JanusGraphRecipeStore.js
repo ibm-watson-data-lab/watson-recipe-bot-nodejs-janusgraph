@@ -17,11 +17,7 @@ class JanusGraphRecipeStore {
      * @returns {Promise.<TResult>}
      */
     init() {
-        return this.graphClient.getOrCreateGraph(this.graphId)
-            .then(() => {
-                this.graphClient.setGraphId(this.graphId);
-                return Promise.resolve();
-            });
+        return this.graphClient.getOrCreateGraph(this.graphId);
     }
 
     // User
@@ -212,7 +208,7 @@ class JanusGraphRecipeStore {
      */
     findFavoriteRecipesForUser(userVertex, count) {
         let query = `g.V().hasLabel("person").has("name", "${userVertex.properties['name'][0]['value']}").outE().order().by("count", decr).inV().hasLabel("recipe").limit(${count})`;
-        return this.graphClient.runGremlinQuery(`def g = graph.traversal(); ${query}`)
+        return this.graphClient.runGremlinQuery(this.graphId, `def g = graph.traversal(); ${query}`)
             .then((response) => {
                 if (response.result && response.result.data && response.result.data.length > 0) {
                     let recipes = [];
@@ -267,7 +263,7 @@ class JanusGraphRecipeStore {
     }
 
     getRecommendedRecipes(query, count) {
-        return this.graphClient.runGremlinQuery(`def g = graph.traversal(); ${query}`)
+        return this.graphClient.runGremlinQuery(this.graphId, `def g = graph.traversal(); ${query}`)
             .then((response) => {
                 if (response.result && response.result.data && response.result.data.length > 0) {
                     let recipes = [];
@@ -356,7 +352,7 @@ class JanusGraphRecipeStore {
      */
     findVertex(label, propertyName, propertyValue) {
         let query = `g.V().hasLabel("${label}").has("${propertyName}", "${propertyValue}")`;
-        return this.graphClient.runGremlinQuery(`def g = graph.traversal(); ${query}`)
+        return this.graphClient.runGremlinQuery(this.graphId, `def g = graph.traversal(); ${query}`)
             .then((response) => {
 				if (response.result && response.result.data && response.result.data.length > 0) {
 					return Promise.resolve(response.result.data[0]);
@@ -376,7 +372,7 @@ class JanusGraphRecipeStore {
     addVertexIfNotExists(vertex, uniquePropertyName) {
         let propertyValue = `${vertex[uniquePropertyName]}`;
         let query = `g.V().hasLabel("${vertex.label}").has("${uniquePropertyName}", "${propertyValue}")`;
-        return this.graphClient.runGremlinQuery(`def g = graph.traversal(); ${query}`)
+        return this.graphClient.runGremlinQuery(this.graphId, `def g = graph.traversal(); ${query}`)
             .then((response) =>  {
                 if (response.result && response.result.data && response.result.data.length > 0) {
                     console.log(`Returning ${vertex.label} vertex where ${uniquePropertyName}=${propertyValue}`);
@@ -384,7 +380,7 @@ class JanusGraphRecipeStore {
                 }
                 else {
                     console.log(`Creating ${vertex.label} vertex where ${uniquePropertyName}=${propertyValue}`);
-                    return this.graphClient.createVertex(vertex);
+                    return this.graphClient.createVertex(this.graphId, vertex);
                 }
             });
     }
@@ -396,7 +392,7 @@ class JanusGraphRecipeStore {
      */
     addEdgeIfNotExists(edge) {
         let query = `g.V(${edge.outV}).outE().inV().hasId(${edge.inV}).path()`;
-        return this.graphClient.runGremlinQuery(`def g = graph.traversal(); ${query}`)
+        return this.graphClient.runGremlinQuery(this.graphId, `def g = graph.traversal(); ${query}`)
             .then((response) => {
 				if (response.result && response.result.data && response.result.data.length > 0) {
 					console.log(`Edge from ${edge.outV} to ${edge.inV} exists.`);
@@ -404,7 +400,7 @@ class JanusGraphRecipeStore {
 				}
 				else {
 					console.log(`Creating edge from ${edge.outV} to ${edge.inV}`);
-					return this.graphClient.createEdge(edge.label, edge.outV, edge.inV, edge.properties);
+					return this.graphClient.createEdge(this.graphId, edge.label, edge.outV, edge.inV, edge.properties);
 				}
 			});
     }
@@ -417,7 +413,7 @@ class JanusGraphRecipeStore {
      */
     addUpdateEdge(edge) {
         let query = `g.V(${edge.outV}).outE().inV().hasId(${edge.inV}).path()`;
-        return this.graphClient.runGremlinQuery(`def g = graph.traversal(); ${query}`)
+        return this.graphClient.runGremlinQuery(this.graphId, `def g = graph.traversal(); ${query}`)
             .then((response) => {
                 if (response.result && response.result.data && response.result.data.length > 0) {
                     console.log(`Edge from ${edge.outV} to ${edge.inV} exists.`);
@@ -430,11 +426,11 @@ class JanusGraphRecipeStore {
                         count = edge.properties.count;
                     }
                     edge.properties['count'] = count + 1;
-                    return this.graphClient.updateEdge(edge.id, edge.properties);
+                    return this.graphClient.updateEdge(this.graphId, edge.id, edge.properties);
                 }
                 else {
                     console.log(`Creating edge from ${edge.outV} to ${edge.inV}`);
-                    return this.graphClient.createEdge(edge.label, edge.outV, edge.inV, edge.properties);
+                    return this.graphClient.createEdge(this.graphId, edge.label, edge.outV, edge.inV, edge.properties);
                 }
             });
     }

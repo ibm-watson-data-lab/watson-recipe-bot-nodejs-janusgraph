@@ -1,11 +1,11 @@
-# Watson Recipe Bot + IBM Graph
+# Watson Recipe Bot + JanusGraph
 
 This project is based on the [Watson Recipe Bot example](https://medium.com/ibm-watson-developer-cloud/how-to-build-a-recipe-slack-bot-using-watson-conversation-and-spoonacular-api-487eacaf01d4#.i0q8fnhuu).
 The Watson Recipe Bot is a Slack bot that recommends recipes based on ingredients or cuisines.
 This project is essentially a fork of the Watson Recipe Bot with some additional features, including:
 
 1. Multi-user support - the original application supported only a single user interacting with the bot at a time. This application supports multiple users interacting with the bot at the same time.
-2. IBM Graph integration - this application adds IBM Graph integration for caching 3rd party API calls and storing each user's chat history (the ingredients, cuisines, and recipes they have selected).
+2. JanusGraph integration - this application adds JanusGraph integration for caching 3rd party API calls and storing each user's chat history (the ingredients, cuisines, and recipes they have selected).
 3. Additional Watson Conversation intent - this application adds a "favorites" intent which allows a user to request their favorite recipes based on the history stored in Graph.
 4. Recommendations - this application uses the Gremlin query language, supported by IBM Graph, to recommend recipes to users based on selected ingredients or cuisines.
  
@@ -27,10 +27,10 @@ SPOONACULAR_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 CONVERSATION_USERNAME=xxxxxxx-xxxx-xxxx-xxxxx-xxxxxxxxxxxxx
 CONVERSATION_PASSWORD=xxxxxxxxxxxx
 CONVERSATION_WORKSPACE_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-GRAPH_API_URL=https://ibmgraph-alpha.ng.bluemix.net/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g
-GRAPH_USERNAME=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-GRAPH_PASSWORD=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-GRAPH_ID=watson_recipe_bot
+JANUSGRAPH_URL=https://xxx.composedb.com:yyyyy
+JANUSGRAPH_USERNAME=admin
+JANUSGRAPH_PASSWORD=XXXXXXXXXXXXXXXX
+GRAPH_ID=recipebot
 ```
 
 We will show you how to configure the necessary services and retrieve these values in the instructions below:
@@ -41,7 +41,7 @@ The following prerequisites are required to run the application.
 
 1. A [Bluemix](https://www.ibm.com/cloud-computing/bluemix/) account.
 2. A [Watson Conversation](https://www.ibm.com/watson/developercloud/conversation.html) service provisioned in your Bluemix account.
-3. A [Graph](http://www.ibm.com/analytics/us/en/technology/cloud-data-services/graph/) service provisioned in your Bluemix account.
+3. A [JanusGraph](https://www.compose.com/databases/janusgraph) service provisioned in your Compose account.
 4. A [Spoonacular](https://spoonacular.com/food-api) API key. A free tier is available, however a credit card is required.
 5. A [Slack](https://slack.com) account and permission in your Slack team to register a Slack bot. 
 
@@ -57,8 +57,8 @@ you can install it by following the instructions [here](https://nodejs.org/en/).
 From the command-line cd into the watson-recipe-bot-nodejs-cloudant directory:
 
 ```
-git clone https://github.com/ibm-cds-labs/watson-recipe-bot-nodejs-graph
-cd watson-recipe-bot-nodejs-graph
+git clone https://github.com/ibm-cds-labs/watson-recipe-bot-nodejs-janusgraph
+cd watson-recipe-bot-nodejs-janusgraph
 ```
  
 Install dependencies:
@@ -123,7 +123,7 @@ Next, we need to get the Slack ID of the bot.
 In this next step we'll set up your Spoonacular account. Spoonacular is a Food and Recipe API.
 The application uses Spoonacular to find recipes based on ingredient or cuisines requested by the user.
   
-*Note: If you have previously configured Spoonacular to work with the [Watson Recipe Bot Cloudant example](https://github.com/ibm-cds-labs/watson-recipe-bot-python-cloudant),
+*Note: If you have previously configured Spoonacular to work with the [Watson Recipe Bot Cloudant example](https://github.com/ibm-cds-labs/watson-recipe-bot-nodejs-cloudant),
 or any other Watson Recipe Bot example, you can copy the SPOONACULAR_KEY value from your .env file for that example into the .env file for this example and move onto the next step.*  
 
 1. In your web browser go to [https://spoonacular.com/food-api](https://spoonacular.com/food-api).
@@ -157,7 +157,7 @@ Login to your Bluemix account.
 
 First, we'll walk you through provisioning a Watson Conversation service in your Bluemix account:
 
-*Note: If you have previously configured Watson Conversation to work with the [Watson Recipe Bot Cloudant example](https://github.com/ibm-cds-labs/watson-recipe-bot-python-cloudant),
+*Note: If you have previously configured Watson Conversation to work with the [Watson Recipe Bot Cloudant example](https://github.com/ibm-cds-labs/watson-recipe-bot-nodejs-cloudant),
 or any other Watson Recipe Bot example, you can copy the CONVERSATION_USERNAME, CONVERSATION_PASSWORD, and CONVERSATION_WORKSPACE_ID values from your .env file for that example into the .env file for this example and move onto the next step.*  
 
 1. From your Bluemix Applications or Services Dashboard click the **Create Service** button.
@@ -197,7 +197,7 @@ Next, let's launch the Watson Conversation tool and import our conversation work
 
     ![Watson Conversation](screenshots/conversation5.png?rev=1&raw=true)
     
-5. Choose the workspace.json file in the application directory (*watson-recipe-bot-nodejs-graph/workspace.json*).
+5. Choose the workspace.json file in the application directory (*watson-recipe-bot-nodejs-janusgraph/workspace.json*).
 6. Click the **Import** button.
 
     ![Watson Conversation](screenshots/conversation6.png?rev=1&raw=true)
@@ -213,25 +213,32 @@ Next, let's launch the Watson Conversation tool and import our conversation work
     CONVERSATION_WORKSPACE_ID=40xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     ```
 
-### IBM Graph
+### JanusGraph
 
-We're almost there! Next, we'll provision an instance of IBM Graph in our Bluemix account. After this step we will be able to run our bot locally.
+We're almost there! Next, we'll provision an instance of JanusGraph in our Compose account. JanusGraph is still in beta,
+and is not available in Bluemix, so you will have to create a Compose account if you do not already have one.
+After this step we will be able to run our bot locally.
 
-1. From your Bluemix Applications or Services Dashboard click the **Create Service** button.
-2. In the IBM Bluemix Catalog search for **IBM Graph**.
-3. Select the **IBM Graph** service.
 
-    ![Watson Conversation](screenshots/ibmgraph1.png?rev=1&raw=true)
-    
-4. Click the **Create** button on the Graph detail page.
-5. On your newly created Graph service page click the **Service Credentials** tab.
-6. Find your newly created Credentials and click **View Credentials**
-7. Copy the apiURL, username, and password into your .env file:
+1. Sign into or create a new Compose account at [http://compose.com](http://compose.com)
+2. From Deployments click the **Create Deployment** button.
+3. Select **JanusGraph** under _Beta Deployments_.
+4. Click **Create Deployment**.
+
+Note: At the time of this writing there is a 30-day free trial of JanusGraph. Be sure to understand the costs that you 
+may incur by creating a JanusGraph deployment.
+
+5. On your JanusGraph Deployment overview find the Credentials and the HTTPS Connection String under _Connection Info_.
+It should look something like this:
+
+![JanusGraph](screenshots/compose1.png?rev=2&raw=true)
+
+6. Copy the username, password, and one of the HTTPS connection strings into your .env file:
 
     ```
-    GRAPH_API_URL=https://ibmgraph-alpha.ng.bluemix.net/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/g
-    GRAPH_USER_NAME=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    GRAPH_PASSWORD=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    JANUSGRAPH_URL=https://xxx.composedb.com:yyyyy
+    JANUSGRAPH_USERNAME=admin
+    JANUSGRAPH_PASSWORD=XXXXXXXXXXXXXXXX
     ```
 
 ### Run Locally

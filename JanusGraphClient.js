@@ -5,10 +5,10 @@ const rp = require('request-promise');
 class JanusGraphClient {
 
     /**
-     * Creates a new instance of GraphClient.
-     * @param {String} url - 
-     * @param {String} username - 
-	 * @param {String} password - 
+     * Creates a new instance of JanusGraphClient.
+     * @param {String} url - JanusGraph url
+     * @param {String} username - JanusGraph username
+	 * @param {String} password - JanusGraph password
      */
     constructor(url, username, password) {
     	this.url = url;
@@ -66,12 +66,8 @@ class JanusGraphClient {
 			});
 	}
 
-	setGraphId(id) {
-    	this.graphId = id;
-	}
-
-	runGremlinQuery(gremlinQuery) {
-		let gremlin = `def graph=ConfiguredGraphFactory.open("${this.graphId}");`;
+	runGremlinQuery(graphId, gremlinQuery) {
+		let gremlin = `def graph=ConfiguredGraphFactory.open("${graphId}");`;
 		gremlin +=  gremlinQuery;
 		return rp(this.getPostOptions({'gremlin': gremlin}))
 			.then((responseBody) => {
@@ -84,7 +80,7 @@ class JanusGraphClient {
 			});
 	}
 
-	createVertex(vertex) {
+	createVertex(graphId, vertex) {
 		let gremlinQuery = `graph.addVertex(T.label, "${vertex.label}"`;
 		for (let property in vertex) {
 			if (vertex.hasOwnProperty(property) && property != 'label') {
@@ -99,7 +95,7 @@ class JanusGraphClient {
 			}
 		}
 		gremlinQuery += ');';
-		return this.runGremlinQuery(gremlinQuery)
+		return this.runGremlinQuery(graphId, gremlinQuery)
 			.then((response) => {
 				if (response.result && response.result.data && response.result.data.length > 0) {
 					return Promise.resolve(response.result.data[0]);
@@ -110,7 +106,7 @@ class JanusGraphClient {
 			});
 	}
 
-	createEdge(label, outV, inV, properties) {
+	createEdge(graphId, label, outV, inV, properties) {
 		let gremlinQuery = 'def g = graph.traversal();';
 		gremlinQuery += `def outV = g.V(${outV}).next();`;
 		gremlinQuery += `def inV = g.V(${inV}).next();`;
@@ -127,7 +123,7 @@ class JanusGraphClient {
 			}
 		}
 		gremlinQuery += ');';
-		return this.runGremlinQuery(gremlinQuery)
+		return this.runGremlinQuery(graphId, gremlinQuery)
 			.then((response) => {
 				if (response.result && response.result.data && response.result.data.length > 0) {
 					return Promise.resolve(response.result.data[0]);
@@ -138,9 +134,9 @@ class JanusGraphClient {
 			});
 	}
 
-	updateEdge(id, properties) {
+	updateEdge(graphId, edgeId, properties) {
 		let gremlinQuery = 'def g = graph.traversal();';
-		gremlinQuery += `g.E("${id}")`;
+		gremlinQuery += `g.E("${edgeId}")`;
 		for (let property in properties) {
 			if (properties.hasOwnProperty(property)) {
 				let value = properties[property];
@@ -153,7 +149,7 @@ class JanusGraphClient {
 			}
 		}
 		gremlinQuery += ';';
-		return this.runGremlinQuery(gremlinQuery);
+		return this.runGremlinQuery(graphId, gremlinQuery);
 	}
 	
 	isStringValue(value) {
@@ -167,58 +163,6 @@ class JanusGraphClient {
 		// escape dollar signs
 		return value.replace(new RegExp('\\$', 'g'), '\\\$');
 	}
-
-	// // Backwards-Compatible with nodejs-graph
-	//
-	// gremlin(traversal, callback) {
-	// 	return this.runGremlinQuery(traversal)
-	// 		.then((responseBody) => {
-	// 			callback(null, responseBody);
-	// 		})
-	// 		.catch((err) => {
-	// 			callback(err, null);
-	// 		});
-	// }
-	//
-	// vertices() {
-	// 	const client = this;
-	// 	return {
-	// 		create: function(keyPairs, callback) {
-	// 			client.createVertex(keyPairs)
-	// 				.then((responseBody) => {
-	// 					callback(null, responseBody);
-	// 				})
-	// 				.catch((err) => {
-	// 					callback(err, null);
-	// 				});
-	// 		}
-	// 	}
-	// }
-	//
-	// edges() {
-	// 	const client = this;
-	// 	return {
-	// 		create: function (label, outV, inV, properties, callback) {
-	// 			client.createEdge(label, outV, inV, properties)
-	// 				.then((responseBody) => {
-	// 					callback(null, responseBody);
-	// 				})
-	// 				.catch((err) => {
-	// 					callback(err, null);
-	// 				});
-	// 		},
-	//
-	// 		update: function (id, keyPairs, callback) {
-	// 			client.updateEdge(id, keyPairs["properties"])
-	// 				.then((responseBody) => {
-	// 					callback(null, responseBody);
-	// 				})
-	// 				.catch((err) => {
-	// 					callback(err, null);
-	// 				});
-	// 		}
-	// 	}
-	// }
 }
 
 module.exports = JanusGraphClient;
