@@ -7,7 +7,7 @@ This project is essentially a fork of the Watson Recipe Bot with some additional
 1. Multi-user support - the original application supported only a single user interacting with the bot at a time. This application supports multiple users interacting with the bot at the same time.
 2. JanusGraph integration - this application adds JanusGraph integration for caching 3rd party API calls and storing each user's chat history (the ingredients, cuisines, and recipes they have selected).
 3. Additional Watson Conversation intent - this application adds a "favorites" intent which allows a user to request their favorite recipes based on the history stored in Graph.
-4. Recommendations - this application uses the Gremlin query language, supported by IBM Graph, to recommend recipes to users based on selected ingredients or cuisines.
+4. Recommendations - this application uses the Gremlin query language, supported by JanusGraph, to recommend recipes to users based on selected ingredients or cuisines.
  
 ## Getting Started
 
@@ -41,7 +41,7 @@ The following prerequisites are required to run the application.
 
 1. A [Bluemix](https://www.ibm.com/cloud-computing/bluemix/) account.
 2. A [Watson Conversation](https://www.ibm.com/watson/developercloud/conversation.html) service provisioned in your Bluemix account.
-3. A [JanusGraph](https://www.compose.com/databases/janusgraph) service provisioned in your Compose account.
+3. A [JanusGraph](https://www.compose.com/databases/janusgraph) deployment provisioned in your Compose account.
 4. A [Spoonacular](https://spoonacular.com/food-api) API key. A free tier is available, however a credit card is required.
 5. A [Slack](https://slack.com) account and permission in your Slack team to register a Slack bot. 
 
@@ -231,7 +231,7 @@ may incur by creating a JanusGraph deployment.
 5. On your JanusGraph Deployment overview find the Credentials and the HTTPS Connection String under _Connection Info_.
 It should look something like this:
 
-![JanusGraph](screenshots/compose1.png?rev=2&raw=true)
+![JanusGraph](screenshots/compose1.png?rev=1&raw=true)
 
 6. Copy the username, password, and one of the HTTPS connection strings into your .env file:
 
@@ -253,7 +253,7 @@ If all is well you should see output similar to the following:
 
 ```
 Getting graphs...
-Creating graph watson_recipe_bot...
+Creating graph recipebot...
 Getting graph schema...
 Creating graph schema...
 sous-chef is connected and running!
@@ -264,35 +264,6 @@ sous-chef, and say "hi".
 
 ![sous-chef](screenshots/local1.png?rev=2&raw=true)
 
-### IBM Graph Dashboard Quick Start
-
-To learn more about IBM Graph and how the Watson Recipe Bot uses IBM Graph to store users, ingredients, cuisines, and recipes
-launch the IBM Graph dashboard from Bluemix by clicking the **Open** button on the IBM Graph Service Details page.
-Select the watson-recipe-bot graph:
-
-![IBM Graph](screenshots/ibmgraph-dashboard1.png?rev=1&raw=true)
-
-Once you have interacted with the Slack bot a Vertex for your Slack user should have been stored in Graph.
-You can find your Slack ID in `node index.js` output. Look for the following:
- 
-```
-Creating person vertex where name=UXXXXXXXX
-```
-
-Run the following Gremlin query in the IBM Dashboard. Replace UXXXXXXXX with your Slack ID:
-
-```
-def g = graph.traversal();
-g.V().hasLabel("person").has("name","UXXXXXXXX").outE().inV().outE().inV().path();
-```
-
-The screenshot below shows a sample of what you might see in the IBM Graph Dashboard.
-In this case the user has selected a single cuisine and a single recipe:
-
-![IBM Graph](screenshots/ibmgraph-dashboard2.png?rev=1&raw=true)
-
-You can find more information about IBM Graph and the Gremlin query language [here](https://ibm-graph-docs.ng.bluemix.net/).
- 
 ### Sample Conversations
 
 Here are some sample conversations you can have with sous-chef:
