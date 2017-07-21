@@ -1,9 +1,10 @@
 {
-  "name": "watson-recipe-bot-nodejs",
+  "name": "watson-recipe-bot-nodejs-janusgraph",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
